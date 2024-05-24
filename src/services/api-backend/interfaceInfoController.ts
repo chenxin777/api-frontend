@@ -152,21 +152,6 @@ export async function onlineInterfaceInfoUsingPost(
   });
 }
 
-/** searchInterfaceInfoVOByPage POST /api/interfaceInfo/search/page/vo */
-export async function searchInterfaceInfoVoByPageUsingPost(
-  body: API.InterfaceInfoQueryRequest,
-  options?: { [key: string]: any },
-) {
-  return request<API.BaseResponsePageInterfaceInfoVO_>('/api/interfaceInfo/search/page/vo', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
 /** updateInterfaceInfo POST /api/interfaceInfo/update */
 export async function updateInterfaceInfoUsingPost(
   body: API.InterfaceInfoUpdateRequest,
