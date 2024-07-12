@@ -1,14 +1,12 @@
-import { outLogin } from '@/services/ant-design-pro/api';
-import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import { Spin } from 'antd';
 import { createStyles } from 'antd-style';
 import { stringify } from 'querystring';
 import type { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
-import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
-import {userLogoutUsingPost} from '@/services/api-backend/userController';
+import { userLogoutUsingPost } from '@/services/api-backend/userController';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -17,8 +15,7 @@ export type GlobalHeaderRightProps = {
 
 export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
-  const { currentUser } = initialState || {};
-  return <span className="anticon">{currentUser?.userName}</span>;
+  return <span className="anticon">{initialState?.loginUser?.userName}</span>;
 };
 
 const useStyles = createStyles(({ token }) => {
@@ -39,18 +36,16 @@ const useStyles = createStyles(({ token }) => {
   };
 });
 
-export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, children }) => {
+export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ children }) => {
   /**
    * 退出登录，并且将当前的 url 保存
    */
   const loginOut = async () => {
-    await outLogin();
-    const { search, pathname } = window.location;
-    const urlParams = new URL(window.location.href).searchParams;
+    await userLogoutUsingPost();
+    const { search, pathname } = history.location;
     /** 此方法会跳转到 redirect 参数所在的位置 */
-    const redirect = urlParams.get('redirect');
     // Note: There may be security issues, please note
-    if (window.location.pathname !== '/user/login' && !redirect) {
+    if (window.location.pathname !== '/user/login') {
       history.replace({
         pathname: '/user/login',
         search: stringify({
@@ -59,6 +54,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
       });
     }
   };
+
   const { styles } = useStyles();
 
   const { initialState, setInitialState } = useModel('@@initialState');
@@ -67,13 +63,9 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     (event: MenuInfo) => {
       const { key } = event;
       if (key === 'logout') {
-        flushSync(() => {
-          setInitialState((s) => ({ ...s, currentUser: undefined }));
-        });
-        userLogoutUsingPost()
+        loginOut();
         return;
       }
-      history.push(`/account/${key}`);
     },
     [setInitialState],
   );
@@ -90,34 +82,11 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     </span>
   );
 
-  if (!initialState) {
-    return loading;
-  }
-
-  const { currentUser } = initialState;
-  
-  if (!currentUser || !currentUser.name) {
+  if (!initialState || !initialState.loginUser) {
     return loading;
   }
 
   const menuItems = [
-    ...(menu
-      ? [
-          {
-            key: 'center',
-            icon: <UserOutlined />,
-            label: '个人中心',
-          },
-          {
-            key: 'settings',
-            icon: <SettingOutlined />,
-            label: '个人设置',
-          },
-          {
-            type: 'divider' as const,
-          },
-        ]
-      : []),
     {
       key: 'logout',
       icon: <LogoutOutlined />,

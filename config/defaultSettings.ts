@@ -15,9 +15,9 @@ const Settings: ProLayoutProps & {
   fixedHeader: false,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'Ant Design Pro',
+  title: 'Play API',
   pwa: true,
-  logo: 'https://trademark.zbjimg.com/pattern-prod/2017/image_61/27681655.jpg',
+  logo: 'http://8.140.27.137:9000/mypic/imgs/logo.png',
   iconfontUrl: '',
 };
 

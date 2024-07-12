@@ -1,9 +1,9 @@
 import { Footer } from '@/components';
-import { userLoginUsingPost } from '@/services/api-backend/userController';
+import { userRegisterUsingPost } from '@/services/api-backend/userController';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { LoginForm, ProFormText } from '@ant-design/pro-components';
-import { Helmet, Link, history, useModel } from '@umijs/max';
-import { Alert, Tabs, message } from 'antd';
+import { Helmet, Link, history } from '@umijs/max';
+import { Tabs, message } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import Settings from '../../../../config/defaultSettings';
@@ -43,52 +43,31 @@ const useStyles = createStyles(({ token }) => {
     },
   };
 });
-const LoginMessage: React.FC<{
-  content: string;
-}> = ({ content }) => {
-  return (
-    <Alert
-      style={{
-        marginBottom: 24,
-      }}
-      message={content}
-      type="error"
-      showIcon
-    />
-  );
-};
-const Login: React.FC = () => {
-  const [userLoginState] = useState<API.LoginResult>({});
+
+const Register: React.FC = () => {
   const [type, setType] = useState<string>('account');
-  const { setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
 
-  const handleSubmit = async (values: API.UserLoginRequest) => {
+  const handleSubmit = async (values: API.UserRegisterRequest) => {
     try {
-      // 登录
-      const res = await userLoginUsingPost({
+      // 注册
+      const res = await userRegisterUsingPost({
         ...values,
       });
       if (res.data) {
-        await setInitialState({
-          loginUser: res.data,
-        });
-        const urlParams = new URL(window.location.href).searchParams;
-        history.push(urlParams.get('redirect') || '/');
-        return;
+        history.push('/user/login');
       }
     } catch (error) {
-      const defaultLoginFailureMessage = '登录失败，请重试！';
+      const defaultRegisterFailureMessage = '注册失败，请重试！';
       console.log(error);
-      message.error(defaultLoginFailureMessage);
+      message.error(defaultRegisterFailureMessage);
     }
   };
-  const { status, type: loginType } = userLoginState;
   return (
     <div className={styles.container}>
       <Helmet>
         <title>
-          {'登录'}- {Settings.title}
+          {'注册'}- {Settings.title}
         </title>
       </Helmet>
       <div
@@ -98,13 +77,18 @@ const Login: React.FC = () => {
         }}
       >
         <LoginForm
+          submitter={{
+            searchConfig: {
+              submitText: '注册',
+            },
+          }}
           logo={<img alt="logo" src="http://8.140.27.137:9000/mypic/imgs/logo.png" />}
           title="Play API"
           initialValues={{
-            autoLogin: true,
+            autoRegister: true,
           }}
-          onFinish={async (values) => {
-            await handleSubmit(values as API.UserLoginRequest);
+          onFinish={async (values: any) => {
+            await handleSubmit(values as API.UserRegisterRequest);
           }}
         >
           <Tabs
@@ -114,14 +98,10 @@ const Login: React.FC = () => {
             items={[
               {
                 key: 'user',
-                label: '账户密码登录',
+                label: '账户密码注册',
               },
             ]}
           />
-
-          {status === 'error' && loginType === 'account' && (
-            <LoginMessage content={'错误的用户名和密码(admin/ant.design)'} />
-          )}
           {type === 'account' && (
             <>
               <ProFormText
@@ -130,7 +110,7 @@ const Login: React.FC = () => {
                   size: 'large',
                   prefix: <UserOutlined />,
                 }}
-                placeholder={'用户名: admin or user'}
+                placeholder={'用户名'}
                 rules={[
                   {
                     required: true,
@@ -144,7 +124,21 @@ const Login: React.FC = () => {
                   size: 'large',
                   prefix: <LockOutlined />,
                 }}
-                placeholder={'密码: ant.design'}
+                placeholder={'输入密码'}
+                rules={[
+                  {
+                    required: true,
+                    message: '密码是必填项！',
+                  },
+                ]}
+              />
+              <ProFormText.Password
+                name="checkPassword"
+                fieldProps={{
+                  size: 'large',
+                  prefix: <LockOutlined />,
+                }}
+                placeholder={'再次输入密码'}
                 rules={[
                   {
                     required: true,
@@ -159,7 +153,7 @@ const Login: React.FC = () => {
               marginBottom: 24,
             }}
           >
-            <Link to="/user/register">新用户注册</Link>
+            <Link to="/user/login">登录</Link>
           </div>
         </LoginForm>
       </div>
@@ -167,4 +161,4 @@ const Login: React.FC = () => {
     </div>
   );
 };
-export default Login;
+export default Register;

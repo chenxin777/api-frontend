@@ -1,6 +1,4 @@
-import {
-  PageContainer,
-} from '@ant-design/pro-components';
+import {PageContainer,} from '@ant-design/pro-components';
 import '@umijs/max';
 import React, {useEffect, useState} from 'react';
 import ReactECharts from 'echarts-for-react';
@@ -15,7 +13,7 @@ const interfaceAnalysis: React.FC = () => {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [data, setData] = useState<API.InterfaceInfoRankVO[]>([]);
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {

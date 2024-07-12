@@ -1,25 +1,20 @@
-import { PlusOutlined } from '@ant-design/icons';
-import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import {
-  FooterToolbar,
-  PageContainer,
-  ProDescriptions,
-  ProTable,
-} from '@ant-design/pro-components';
-import '@umijs/max';
-import { Button, Drawer, message } from 'antd';
-import React, { useRef, useState } from 'react';
+import CreateModal from '@/pages/Admin/interfaceInfo/components/CreateModal';
+import UpdateModal from '@/pages/Admin/interfaceInfo/components/UpdateModal';
+import ViewModal from '@/pages/Admin/interfaceInfo/components/ViewModal';
 import {
   addInterfaceInfoUsingPost,
   deleteInterfaceInfoUsingPost,
   listInterfaceInfoByPageUsingPost,
   offlineInterfaceInfoUsingPost,
   onlineInterfaceInfoUsingPost,
-  updateInterfaceInfoUsingPost
+  updateInterfaceInfoUsingPost,
 } from '@/services/api-backend/interfaceInfoController';
-import type {SortOrder} from 'antd/lib/table/interface';
-import CreateModal from '@/pages/Admin/interfaceInfo/components/CreateModal';
-import UpdateModal from '@/pages/Admin/interfaceInfo/components/UpdateModal';
+import { PlusOutlined } from '@ant-design/icons';
+import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
+import { PageContainer, ProDescriptions, ProTable } from '@ant-design/pro-components';
+import '@umijs/max';
+import { Button, Drawer, message } from 'antd';
+import React, { useRef, useState } from 'react';
 
 const TableList: React.FC = () => {
   /**
@@ -30,17 +25,16 @@ const TableList: React.FC = () => {
    * 修改弹窗
    */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
+  const [viewModalOpen, handleViewModalOpen] = useState<boolean>(false);
+  const [viewTitle, setViewTitle] = useState<string>('');
+  const [viewValue, setViewValue] = useState<string>('');
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
   /**
    * 选择单行
    */
   const [currentRow, setCurrentRow] = useState<API.InterfaceInfo>();
-  /**
-   * 选择多行
-   */
-  const [selectedRowsState, setSelectedRows] = useState<API.InterfaceInfo[]>([]);
-  
+
   /**
    * 新增触发方法
    * @param fields
@@ -54,6 +48,7 @@ const TableList: React.FC = () => {
       hide();
       message.success('创建成功');
       handleCreateModalOpen(false);
+      actionRef.current?.reload();
       return true;
     } catch (error: any) {
       hide();
@@ -61,7 +56,7 @@ const TableList: React.FC = () => {
       return false;
     }
   };
-  
+
   /**
    * 修改触发
    * @param fields
@@ -74,18 +69,20 @@ const TableList: React.FC = () => {
     try {
       await updateInterfaceInfoUsingPost({
         id: currentRow?.id,
-        ...fields
+        ...fields,
       });
       hide();
       message.success('修改成功');
+      handleUpdateModalOpen(false);
+      actionRef.current?.reload();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       hide();
       message.error(error.message);
       return false;
     }
   };
-  
+
   /**
    * 删除触发方法
    * @param selectedRows
@@ -95,19 +92,19 @@ const TableList: React.FC = () => {
     if (!record) return true;
     try {
       await deleteInterfaceInfoUsingPost({
-        id: record.id
+        id: record.id,
       });
       hide();
       message.success('删除成功');
       actionRef.current?.reload();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       hide();
       message.error(error.message);
       return false;
     }
   };
-  
+
   /**
    * 接口上线
    * @param record
@@ -117,19 +114,19 @@ const TableList: React.FC = () => {
     if (!record) return true;
     try {
       await onlineInterfaceInfoUsingPost({
-        id: record.id
+        id: record.id,
       });
       hide();
       message.success('发布成功');
       actionRef.current?.reload();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       hide();
       message.error(error.message);
       return false;
     }
   };
-  
+
   /**
    * 接口下线
    * @param record
@@ -139,22 +136,22 @@ const TableList: React.FC = () => {
     if (!record) return true;
     try {
       await offlineInterfaceInfoUsingPost({
-        id: record.id
+        id: record.id,
       });
       hide();
       message.success('下线成功');
       actionRef.current?.reload();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       hide();
       message.error(error.message);
       return false;
     }
   };
-  
+
   const columns: ProColumns<API.InterfaceInfo>[] = [
     {
-      title: 'id',
+      title: '序号',
       dataIndex: 'id',
       valueType: 'index',
     },
@@ -163,42 +160,115 @@ const TableList: React.FC = () => {
       dataIndex: 'name',
       valueType: 'text',
       align: 'center',
-      formItemProps:  {
-        rules: [
-          {required: true, message: '接口为空'}
-        ]
-      }
+      formItemProps: {
+        rules: [{ required: true, message: '接口名称为空' }],
+      },
     },
     {
-      title: '描述',
+      title: '接口描述',
+      align: 'center',
       dataIndex: 'description',
       valueType: 'textarea',
+      ellipsis: true,
+      hideInSearch: true,
+      formItemProps: {
+        rules: [{ required: true, message: '接口描述为空' }],
+      },
+      render: (_, record) => [
+        <Button
+          key="view"
+          onClick={() => {
+            handleViewModalOpen(true);
+            setViewTitle('接口描述');
+            setViewValue(record.description || '');
+          }}
+        >
+          查看
+        </Button>,
+      ],
     },
     {
       title: '请求方法',
+      align: 'center',
       dataIndex: 'method',
       valueType: 'text',
-      align: 'center',
+      formItemProps: {
+        rules: [{ required: true, message: '请求方法为空' }],
+      },
     },
     {
       title: '接口地址',
+      align: 'center',
       dataIndex: 'url',
-      valueType: 'jsonCode',
+      formItemProps: {
+        rules: [{ required: true, message: '接口地址为空' }],
+      },
+      render: (_, record) => [
+        <Button
+          key="view"
+          onClick={() => {
+            handleViewModalOpen(true);
+            setViewTitle('接口地址');
+            setViewValue(record.url || '');
+          }}
+        >
+          查看
+        </Button>,
+      ],
     },
     {
       title: '请求参数',
+      align: 'center',
       dataIndex: 'requestParams',
-      valueType: 'jsonCode',
+      hideInSearch: true,
+      render: (_, record) => [
+        <Button
+          key="view"
+          onClick={() => {
+            handleViewModalOpen(true);
+            setViewTitle('请求参数');
+            setViewValue(record.requestParams || '');
+          }}
+        >
+          查看
+        </Button>,
+      ],
     },
     {
       title: '请求头',
+      align: 'center',
       dataIndex: 'requestHeader',
-      valueType: 'jsonCode',
+      hideInSearch: true,
+      render: (_, record) => [
+        <Button
+          key="view"
+          onClick={() => {
+            handleViewModalOpen(true);
+            setViewTitle('请求头');
+            setViewValue(record.requestHeader || '');
+          }}
+        >
+          查看
+        </Button>,
+      ],
     },
     {
       title: '响应头',
+      align: 'center',
       dataIndex: 'responseHeader',
-      valueType: 'jsonCode',
+      hideInSearch: true,
+      render: (_, record) => [
+        <Button
+          key="view"
+          onClick={() => {
+            handleViewModalOpen(true);
+            setViewTitle('响应头');
+            setViewValue(record.responseHeader || '');
+          }}
+        >
+          查看
+        </Button>,
+      ],
     },
     {
       title: '状态',
@@ -222,6 +292,7 @@ const TableList: React.FC = () => {
       align: 'center',
       valueType: 'dateTime',
       hideInForm: true,
+      hideInSearch: true,
     },
     {
       title: '更新时间',
@@ -229,188 +300,169 @@ const TableList: React.FC = () => {
       align: 'center',
       valueType: 'dateTime',
       hideInForm: true,
+      hideInSearch: true,
     },
     {
       title: '操作',
       align: 'center',
       dataIndex: 'option',
       valueType: 'option',
-      render: (_, record) => [
-        <Button
-            key="config"
+      render: (_, record) => (
+        <div
+          style={{
+            display: 'flex', // 使用Flexbox布局
+            flexWrap: 'wrap', // 允许按钮换行
+            alignItems: 'center',
+            justifyContent: 'space-around', // 对齐方式
+            overflow: 'auto', // 自动滚动，如果内容超出
+            maxWidth: '100%', // 最大宽度为单元格宽度
+          }}
+        >
+          <Button
+            key="update"
+            type="text"
             onClick={() => {
               handleUpdateModalOpen(true);
               setCurrentRow(record);
             }}
-        >
-          修改
-        </Button>,
-        record.status === 0 ? <Button
-            type='text'
-            key="config"
-            onClick={() => {
-              handleOnline(record);
-              setCurrentRow(record);
-            }}
-        >
-          发布
-        </Button> : null,
-        record.status === 1 ? <Button
-            type='text'
+          >
+            修改
+          </Button>
+          {record.status === 0 ? (
+            <Button
+              key="online"
+              type="text"
+              onClick={() => {
+                handleOnline(record);
+                setCurrentRow(record);
+              }}
+            >
+              发布
+            </Button>
+          ) : null}
+          {record.status === 1 ? (
+            <Button
+              danger
+              key="offline"
+              type="text"
+              onClick={() => {
+                handleOffline(record);
+                setCurrentRow(record);
+              }}
+            >
+              下线
+            </Button>
+          ) : null}
+          <Button
             danger
-            key="config"
-            onClick={() => {
-              handleOffline(record);
-              setCurrentRow(record);
-            }}
-        >
-          下线
-        </Button> : null,
-        <Button
-            type='text'
-            danger
-            key="config"
+            key="remove"
+            type="text"
             onClick={() => {
               handleRemove(record);
             }}
-        >
-          删除
-        </Button>
-      ],
+          >
+            删除
+          </Button>
+        </div>
+      ),
     },
   ];
-  
-  return (
-      <PageContainer>
-        <ProTable<API.RuleListItem, API.PageParams>
-            headerTitle={'查询表格'}
-            actionRef={actionRef}
-            rowKey="key"
-        search={{
-          labelWidth: 120,
-        }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleCreateModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> 新建
-          </Button>,
-        ]}
-        request={async (
-          params: {
-            pageSize?: number;
-            current?: number;
-            keyword?: string;
-          },
-          sort: Record<string, SortOrder>,
-          filter: Record<string, (string | number)[] | null>,
-        ) => {
-          const res: any = await listInterfaceInfoByPageUsingPost({
-            ...params,
-          });
-          if (res?.data) {
-            return {
-              data: res?.data.records || [],
-              success: true,
-              total: res.data.total || 0,
-            };
-          } else {
-            return {
-              data: [],
-              success: false,
-              total: 0,
-            };
-          }
-        }}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
-      />
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              已选择{' '}
-              <a
-                style={{
-                  fontWeight: 600,
-                }}
-              >
-                {selectedRowsState.length}
-              </a>{' '}
-              项 &nbsp;&nbsp;
-              <span>
-                服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)} 万
-              </span>
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            批量删除
-          </Button>
-          <Button type="primary">批量审批</Button>
-        </FooterToolbar>
-      )}
 
-      <Drawer
-        width={600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<API.RuleListItem>
-            column={2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<API.RuleListItem>[]}
-          />
-        )}
-      </Drawer>
-      
-      <CreateModal
-          columns={columns}
-          onCancel={()=>{handleCreateModalOpen(false)}}
-          onSubmit={(values)=>{handleAdd(values)}}
-          visible={createModalOpen}
-      />
-      <UpdateModal
-          columns={columns}
-          onCancel={() => {handleUpdateModalOpen(false)}}
-          onSubmit={async (value) => {
-            const success = await handleUpdate(value);
-            if (success) {
-              handleUpdateModalOpen(false);
-              setCurrentRow(undefined);
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
+  // @ts-ignore
+  return (
+    <PageContainer>
+      <div style={{ margin: '0 auto' }}>
+        <ProTable<API.RuleListItem, API.PageParams>
+          actionRef={actionRef}
+          rowKey="key"
+          search={{
+            labelWidth: 120,
+          }}
+          toolBarRender={() => [
+            <Button
+              type="primary"
+              key="primary"
+              onClick={() => {
+                handleCreateModalOpen(true);
+              }}
+            >
+              <PlusOutlined /> 新建
+            </Button>,
+          ]}
+          request={async (params: { pageSize?: number; current?: number; keyword?: string }) => {
+            const res: any = await listInterfaceInfoByPageUsingPost({
+              ...params,
+            });
+            if (res?.data) {
+              return {
+                data: res?.data.records || [],
+                success: true,
+                total: res.data.total || 0,
+              };
+            } else {
+              return {
+                data: [],
+                success: false,
+                total: 0,
+              };
             }
+          }}
+          columns={columns}
+        />
+
+        <Drawer
+          width={600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<API.RuleListItem>
+              column={2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<API.RuleListItem>[]}
+            />
+          )}
+        </Drawer>
+
+        <CreateModal
+          columns={columns}
+          onCancel={() => {
+            handleCreateModalOpen(false);
+          }}
+          onSubmit={async (values) => {
+            await handleAdd(values);
+          }}
+          visible={createModalOpen}
+        />
+        <UpdateModal
+          columns={columns}
+          onCancel={() => {
+            handleUpdateModalOpen(false);
+          }}
+          onSubmit={async (value) => {
+            await handleUpdate(value);
+            setCurrentRow(undefined);
           }}
           visible={updateModalOpen}
           values={currentRow || {}}
-      />
+        />
+        <ViewModal
+          title={viewTitle}
+          values={viewValue}
+          onCancel={() => handleViewModalOpen(false)}
+          visible={viewModalOpen}
+        />
+      </div>
     </PageContainer>
   );
 };

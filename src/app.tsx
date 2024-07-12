@@ -1,21 +1,19 @@
 import { AvatarDropdown, AvatarName } from '@/components';
+import Footer from '@/components/Footer';
+import { getLoginUserUsingGet } from '@/services/api-backend/userController';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history } from '@umijs/max';
 import { requestConfig } from './requestConfig';
-import {getLoginUserUsingGet} from '@/services/api-backend/userController';
-import Footer from '@/components/Footer';
-
+import logo from '../public/logo.png'
 const loginPath = '/user/login';
 
 /**
  * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
  * */
 export async function getInitialState(): Promise<InitialState> {
-  
   const state: InitialState = {
-    // @ts-ignore
-    loginUser: undefined
-  }
+    loginUser: {},
+  };
   // 当页面首次加载时,获取全局要保存的数据，比如用户登录信息
   try {
     const res = await getLoginUserUsingGet();
@@ -33,13 +31,13 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   return {
     layout: 'top',
     waterMarkProps: {
-      content: initialState?.loginUser?.userName
+      content: initialState?.loginUser?.userName,
     },
     footerRender: () => <Footer />,
     onPageChange: () => {
       const { location } = history;
       if (!initialState?.loginUser && location.pathname !== loginPath) {
-        history.push(loginPath)
+        history.push(loginPath);
       }
     },
     avatarProps: {
@@ -50,13 +48,9 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       },
     },
     menuHeaderRender: undefined,
-    // 自定义 403 页面
-    // unAccessible: <div>unAccessible</div>,
-    // 增加一个 loading 的状态
-    
+    logo: logo,
   };
 };
-
 
 /**
  * @name request 配置，可以配置错误处理
